@@ -152,13 +152,13 @@ class RepositoryTask
           unless system("rpm",
                         "-q", rpm_gpg_key_package_name(repository_gpg_key_id),
                         out: IO::NULL)
-            gpg_key = Tempfile.new(["repository", ".asc"])
-            sh("gpg",
-               "--armor",
-               "--export", repository_gpg_key_id,
-               out: gpg_key.path)
-            sh("rpm", "--import", gpg_key.path)
-            gpg_key.close!
+            Tempfile.create(["repository", ".asc"]) do |gpg_key|
+              sh("gpg",
+                 "--armor",
+                 "--export", repository_gpg_key_id,
+                 out: gpg_key.path)
+              sh("sudo", "rpm", "--import", gpg_key.path)
+            end
           end
 
           thread_pool = ThreadPool.new(4) do |rpm|
